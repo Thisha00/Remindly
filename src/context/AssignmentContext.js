@@ -11,7 +11,7 @@ const starterAssignments = [
     note: "Design and normalize a database schema for a student registration system.",
     priority: "Urgent",
     difficulty: "Medium",
-    fileName: ""
+    fileName: "",
   },
   {
     id: "2",
@@ -21,7 +21,7 @@ const starterAssignments = [
     note: "Prepare service endpoints and documentation.",
     priority: "Normal",
     difficulty: "Hard",
-    fileName: ""
+    fileName: "",
   },
   {
     id: "3",
@@ -31,8 +31,8 @@ const starterAssignments = [
     note: "Create a clean API proposal with sample JSON responses.",
     priority: "Low",
     difficulty: "Easy",
-    fileName: ""
-  }
+    fileName: "",
+  },
 ];
 
 export function AssignmentProvider({ children }) {
@@ -42,13 +42,18 @@ export function AssignmentProvider({ children }) {
   function addAssignment(assignment) {
     setAssignments((current) => [
       {
-        id: Date.now().toString(),
-        deadline: new Date().toISOString().slice(0, 10),
-        priority: "Normal",
-        difficulty: "Medium",
-        ...assignment
+        id: assignment._id,
+        title: assignment.title,
+        subject: assignment.module,
+        deadline: assignment.deadline,
+        note: assignment.shortSummary,
+        difficulty: assignment.difficulty,
+        estimatedTime: assignment.estimatedTime,
+        pdfUrl: assignment.pdfUrl,
+        owner: assignment.owner,
+        createdAt: assignment.createdAt,
       },
-      ...current
+      ...current,
     ]);
   }
 
@@ -58,7 +63,7 @@ export function AssignmentProvider({ children }) {
     setAssignments((current) => current.filter((item) => item.id !== id));
     setCompletedAssignments((current) => [
       { ...selected, completedAt: new Date().toISOString().slice(0, 10) },
-      ...current
+      ...current,
     ]);
   }
 
@@ -72,12 +77,16 @@ export function AssignmentProvider({ children }) {
       completedAssignments,
       addAssignment,
       completeAssignment,
-      deleteAssignment
+      deleteAssignment,
     }),
-    [assignments, completedAssignments]
+    [assignments, completedAssignments],
   );
 
-  return <AssignmentContext.Provider value={value}>{children}</AssignmentContext.Provider>;
+  return (
+    <AssignmentContext.Provider value={value}>
+      {children}
+    </AssignmentContext.Provider>
+  );
 }
 
 export function useAssignments() {

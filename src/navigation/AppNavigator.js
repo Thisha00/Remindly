@@ -6,10 +6,17 @@ import RegisterScreen from "../screens/RegisterScreen";
 import AddAssignmentScreen from "../screens/AddAssignmentScreen";
 import AssignmentDetailsScreen from "../screens/AssignmentDetailsScreen";
 import BottomTabs from "./BottomTabs";
-
+import { useToast } from "../context/ToastContext";
+import { useEffect } from "react";
+import { registerToast } from "../services/toastService";
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    registerToast(showToast);
+  }, [showToast]);
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
@@ -17,7 +24,10 @@ export default function AppNavigator() {
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="MainTabs" component={BottomTabs} />
       <Stack.Screen name="AddAssignment" component={AddAssignmentScreen} />
-      <Stack.Screen name="AssignmentDetails" component={AssignmentDetailsScreen} />
+      <Stack.Screen
+        name="AssignmentDetails"
+        component={AssignmentDetailsScreen}
+      />
     </Stack.Navigator>
   );
 }
