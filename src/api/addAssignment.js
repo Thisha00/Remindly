@@ -36,7 +36,9 @@ export async function uploadAssignment({
     return response.data;
   } catch (error) {
     console.error("Error during assignment upload:", error);
-
+    console.log("Error response:", error.response);
+    console.log("Error message:", error.message);
+    console.log("Error config:", error.config);
     if (error.response && error.response.data && error.response.data.message) {
       showGlobalToast(error.response.data.message, "error");
     } else {

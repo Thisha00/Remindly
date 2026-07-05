@@ -6,20 +6,28 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import Toast from "./src/components/toast";
 import { ToastProvider } from "./src/context/ToastContext";
 import { AuthProvider } from "./src/context/authContex";
+import { LoadingProvider } from "./src/context/LoadingContext";
+import GlobalLoader from "./src/components/GlobalLoader";
+import { RefreshProvider } from "./src/context/refreshContext";
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <ToastProvider>
-          <AssignmentProvider>
-            <NavigationContainer>
-              <Toast />
-              <AppNavigator />
-            </NavigationContainer>
-          </AssignmentProvider>
-        </ToastProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    <LoadingProvider>
+      <RefreshProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AssignmentProvider>
+                <NavigationContainer>
+                  <GlobalLoader />
+                  <Toast />
+                  <AppNavigator />
+                </NavigationContainer>
+              </AssignmentProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </RefreshProvider>
+    </LoadingProvider>
   );
 }

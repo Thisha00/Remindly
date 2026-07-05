@@ -1,20 +1,32 @@
 import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
+import { useAuth } from "../context/authContex";
 
 export default function SplashScreen({ navigation }) {
   const progress = useSharedValue(0);
+  const { user } = useAuth();
 
   useEffect(() => {
     progress.value = withTiming(1, { duration: 1800 });
-    const timer = setTimeout(() => navigation.replace("Login"), 2200);
+    const timer = setTimeout(() => {
+      if (!user) {
+        navigation.replace("Login");
+        return;
+      }
+      navigation.replace("MainTabs");
+    }, 2200);
     return () => clearTimeout(timer);
   }, []);
 
   const progressStyle = useAnimatedStyle(() => ({
-    width: `${progress.value * 100}%`
+    width: `${progress.value * 100}%`,
   }));
 
   return (
@@ -23,7 +35,9 @@ export default function SplashScreen({ navigation }) {
         <Icon name="book" size={36} color="#FFFFFF" />
       </View>
       <Text style={styles.title}>Remindly</Text>
-      <Text style={styles.subtitle}>Smart Assignment Management for Students</Text>
+      <Text style={styles.subtitle}>
+        Smart Assignment Management for Students
+      </Text>
       <View style={styles.track}>
         <Animated.View style={[styles.fill, progressStyle]} />
       </View>
@@ -36,7 +50,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 34
+    paddingHorizontal: 34,
   },
   logoBox: {
     width: 82,
@@ -45,18 +59,18 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20
+    marginBottom: 20,
   },
   title: {
     color: "#FFFFFF",
     fontSize: 28,
-    fontWeight: "900"
+    fontWeight: "900",
   },
   subtitle: {
     color: "#DDD6FE",
     fontSize: 13,
     textAlign: "center",
-    marginTop: 8
+    marginTop: 8,
   },
   track: {
     width: 150,
@@ -64,11 +78,11 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     marginTop: 28,
     backgroundColor: "rgba(255,255,255,0.28)",
-    overflow: "hidden"
+    overflow: "hidden",
   },
   fill: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#FFFFFF"
-  }
+    backgroundColor: "#FFFFFF",
+  },
 });

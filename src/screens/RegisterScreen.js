@@ -7,6 +7,7 @@ import { globalStyles } from "../styles/globalStyles";
 import { useToast } from "../context/ToastContext";
 import { userRegister } from "../api/userRegister";
 import { useAuth } from "../context/authContex";
+import { useLoading } from "../context/LoadingContext";
 
 export default function RegisterScreen({ navigation }) {
   const { colors } = useTheme();
@@ -19,25 +20,39 @@ export default function RegisterScreen({ navigation }) {
 
   const { showToast } = useToast();
   const { login } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
+
   const handleRegister = async () => {
-    if (!name || !email || !university || !year || !password || !confirm) {
-      showToast("Please fill all fields", "error");
-      return;
+    try {
+      showLoading();
+      if (!name || !email || !university || !year || !password || !confirm) {
+        showToast("Please fill all fields", "error");
+        return;
+      }
+      if (password !== confirm) {
+        showToast("Passwords do not match", "error");
+        return;
+      }
+      const result = await userRegister({
+        name,
+        university,
+        year,
+        email,
+        password,
+      });
+      console.log("Registration result:", result);
+      login(
+        result.data.user,
+        result.data.accessToken,
+        result.data.refreshToken,
+      );
+      navigation.navigate("MainTabs");
+    } catch (error) {
+      console.error("Error registering user:", error);
+      showToast("An error occurred while registering.", "error");
+    } finally {
+      hideLoading();
     }
-    if (password !== confirm) {
-      showToast("Passwords do not match", "error");
-      return;
-    }
-    const result = await userRegister({
-      name,
-      university,
-      year,
-      email,
-      password,
-    });
-    console.log("Registration result:", result);
-    login(result.data.user, result.data.accessToken, result.data.refreshToken);
-    navigation.navigate("MainTabs");
   };
 
   return (

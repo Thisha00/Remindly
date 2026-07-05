@@ -14,6 +14,7 @@ import { globalStyles } from "../styles/globalStyles";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/authContex";
 import { userLogin } from "../api/userlogin";
+import { useLoading } from "../context/LoadingContext";
 
 export default function LoginScreen({ navigation }) {
   const { colors } = useTheme();
@@ -23,14 +24,27 @@ export default function LoginScreen({ navigation }) {
   const { showToast } = useToast();
   const { login } = useAuth();
 
+  const { showLoading, hideLoading } = useLoading();
   const handleLogin = async () => {
-    if (!email || !password) {
-      showToast("Please fill all fields", "error");
-      return;
+    showLoading();
+    try {
+      if (!email || !password) {
+        showToast("Please fill all fields", "error");
+        return;
+      }
+      const result = await userLogin({ email, password });
+      login(
+        result.data.user,
+        result.data.accessToken,
+        result.data.refreshToken,
+      );
+      navigation.navigate("MainTabs");
+    } catch (error) {
+      console.error("Login error:", error);
+      showToast("An error occurred during login. Please try again.", "error");
+    } finally {
+      hideLoading();
     }
-    const result = await userLogin({ email, password });
-    login(result.data.user, result.data.accessToken, result.data.refreshToken);
-    navigation.navigate("MainTabs");
   };
 
   return (

@@ -16,15 +16,17 @@ import { useAssignments } from "../context/AssignmentContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import { uploadAssignment } from "../api/addAssignment";
+import { useLoading } from "../context/LoadingContext";
 
 export default function AddAssignmentScreen({ navigation }) {
-  const { addAssignment } = useAssignments();
+  const { addAssignment, setTotalAssingments } = useAssignments();
   const { colors } = useTheme();
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
   const [note, setNote] = useState("");
   const [pdfFile, setPdfFile] = useState(null);
 
+  const { showLoading, hideLoading } = useLoading();
   const { showToast } = useToast();
 
   async function choosePdf() {
@@ -49,19 +51,28 @@ export default function AddAssignmentScreen({ navigation }) {
   }
 
   async function save() {
-    if (!title || !subject || !pdfFile) {
-      showToast("Please fill in all fields and upload a PDF file.", "error");
-      return;
+    try {
+      showLoading();
+      if (!title || !subject || !pdfFile) {
+        showToast("Please fill in all fields and upload a PDF file.", "error");
+        return;
+      }
+      const result = await uploadAssignment({
+        title,
+        module: subject,
+        showadditionalInfo: note,
+        file: pdfFile,
+      });
+      console.log("Upload result:", result);
+      addAssignment(result.data.assignment);
+      setTotalAssingments((n) => n + 1);
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error uploading assignment:", error);
+      showToast("An error occurred while uploading the assignment.", "error");
+    } finally {
+      hideLoading();
     }
-    const result = await uploadAssignment({
-      title,
-      module: subject,
-      showadditionalInfo: note,
-      file: pdfFile,
-    });
-    console.log("Upload result:", result);
-    addAssignment(result.data.assignment);
-    navigation.goBack();
   }
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>

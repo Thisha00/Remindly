@@ -2,59 +2,38 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 
 const AssignmentContext = createContext();
 
-const starterAssignments = [
-  {
-    id: "1",
-    title: "Database Normalization",
-    subject: "Database Management",
-    deadline: "2026-09-15",
-    note: "Design and normalize a database schema for a student registration system.",
-    priority: "Urgent",
-    difficulty: "Medium",
-    fileName: "",
-  },
-  {
-    id: "2",
-    title: "Python Microservices",
-    subject: "Software Architecture",
-    deadline: "2026-09-18",
-    note: "Prepare service endpoints and documentation.",
-    priority: "Normal",
-    difficulty: "Hard",
-    fileName: "",
-  },
-  {
-    id: "3",
-    title: "RESTful API Design",
-    subject: "Web Development",
-    deadline: "2026-09-23",
-    note: "Create a clean API proposal with sample JSON responses.",
-    priority: "Low",
-    difficulty: "Easy",
-    fileName: "",
-  },
-];
-
 export function AssignmentProvider({ children }) {
-  const [assignments, setAssignments] = useState(starterAssignments);
+  const [assignments, setAssignments] = useState([]);
   const [completedAssignments, setCompletedAssignments] = useState([]);
+  const [totalAssingments, setTotalAssingments] = useState(0);
+  const [complete, setComplete] = useState(0);
 
-  function addAssignment(assignment) {
-    setAssignments((current) => [
-      {
-        id: assignment._id,
-        title: assignment.title,
-        subject: assignment.module,
-        deadline: assignment.deadline,
-        note: assignment.shortSummary,
-        difficulty: assignment.difficulty,
-        estimatedTime: assignment.estimatedTime,
-        pdfUrl: assignment.pdfUrl,
-        owner: assignment.owner,
-        createdAt: assignment.createdAt,
-      },
-      ...current,
-    ]);
+  function addAssignment(assignments) {
+    const items = Array.isArray(assignments) ? assignments : [assignments];
+
+    setAssignments((current) => {
+      const existingIds = new Set(current.map((item) => item.id));
+
+      const newItems = items
+        .filter((item) => !existingIds.has(item._id))
+        .map((assignment) => ({
+          id: assignment._id,
+          title: assignment.title,
+          subject: assignment.module,
+          deadline: assignment.deadline?.split("T")[0] ?? "",
+          note: assignment.shortSummary,
+          difficulty: assignment.difficulty,
+          estimatedTime: assignment.estimatedTime,
+          pdfUrl: assignment.pdfUrl,
+          owner: assignment.owner,
+          completeStatus: assignment.completeStatus,
+          priority: assignment.priority,
+          createdAt: assignment.createdAt,
+        }));
+      console.log("current", current);
+      console.log("new", newItems);
+      return [...newItems, ...current];
+    });
   }
 
   function completeAssignment(id) {
@@ -78,6 +57,10 @@ export function AssignmentProvider({ children }) {
       addAssignment,
       completeAssignment,
       deleteAssignment,
+      totalAssingments,
+      setTotalAssingments,
+      complete,
+      setComplete,
     }),
     [assignments, completedAssignments],
   );

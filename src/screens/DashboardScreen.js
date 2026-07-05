@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   FlatList,
+  Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -12,11 +13,37 @@ import AssignmentCard from "../components/AssignmentCard";
 import { useAssignments } from "../context/AssignmentContext";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/authContex";
+import { useLoading } from "../context/LoadingContext";
+import { getAssignments } from "../api/getAssignments";
+import { useRefresh } from "../context/refreshContext";
 
 export default function DashboardScreen({ navigation }) {
-  const { assignments } = useAssignments();
+  const { assignments, addAssignment, setTotalAssingments, setComplete } =
+    useAssignments();
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
+
+  const { refresh } = useRefresh();
+  useEffect(() => {
+    fetchAssignments();
+  }, [refresh]);
+
+  async function fetchAssignments() {
+    showLoading();
+    try {
+      const fetchedAssignments = await getAssignments();
+
+      addAssignment(fetchedAssignments.assignments);
+      console.log(fetchedAssignments.assignments);
+      setTotalAssingments(fetchedAssignments.pagination.totalAssignments);
+      console.log(fetchedAssignments.pagination.completeAssignments);
+      setComplete(fetchedAssignments.pagination.completeAssignments);
+    } catch {
+    } finally {
+      hideLoading();
+    }
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -32,6 +59,9 @@ export default function DashboardScreen({ navigation }) {
         <View style={[styles.avatar, { backgroundColor: colors.softPrimary }]}>
           <Icon name="school-outline" size={22} color={colors.primary} />
         </View>
+        <Pressable onPress={refresh}>
+          <Text>Test</Text>
+        </Pressable>
       </View>
 
       <Text style={[styles.section, { color: colors.text }]}>
