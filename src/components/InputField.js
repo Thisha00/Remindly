@@ -2,12 +2,26 @@ import React from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 
-export default function InputField({ label, value, onChangeText, placeholder, secureTextEntry, multiline }) {
+export default function InputField({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  secureTextEntry,
+  multiline,
+  keyboardType,
+  error = false,
+  maxLength,
+}) {
   const { colors } = useTheme();
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
+      <Text
+        style={[styles.label, { color: error ? colors.danger : colors.text }]}
+      >
+        {label}
+      </Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -15,10 +29,17 @@ export default function InputField({ label, value, onChangeText, placeholder, se
         placeholderTextColor={colors.muted}
         secureTextEntry={secureTextEntry}
         multiline={multiline}
+        keyboardType={keyboardType}
+        maxLength={maxLength}
         style={[
           styles.input,
           multiline && styles.textArea,
-          { color: colors.text, backgroundColor: colors.card, borderColor: colors.border }
+          {
+            color: colors.text,
+            backgroundColor: colors.card,
+            borderColor: error ? colors.danger : colors.border,
+          },
+          error && styles.errorInput,
         ]}
       />
     </View>
@@ -45,5 +66,6 @@ const styles = StyleSheet.create({
     minHeight: 92,
     paddingTop: 14,
     textAlignVertical: "top"
-  }
+  },
+  errorInput: { borderWidth: 2 },
 });

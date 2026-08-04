@@ -9,8 +9,7 @@ export async function userLogin({ email, password }) {
     });
 
     if (!response.data.success) {
-      showGlobalToast("Login failed.", "error");
-      return;
+      throw new Error("Login failed");
     }
 
     showGlobalToast("Login successful!", "success");
@@ -19,10 +18,11 @@ export async function userLogin({ email, password }) {
   } catch (error) {
     console.error("Error during user login:", error);
 
-    if (error.response && error.response.data && error.response.data.message) {
-      showGlobalToast(error.response.data.message, "error");
-    } else {
-      showGlobalToast("An unexpected error occurred during login.", "error");
-    }
+    showGlobalToast(
+      error.response?.data?.message ||
+        "Unable to sign in. Check your connection and try again.",
+      "error",
+    );
+    throw error;
   }
 }

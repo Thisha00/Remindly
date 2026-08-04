@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from "react";
-import { setTokens } from "../services/tokenService";
+import { clearTokens, setTokens } from "../services/tokenService";
 
 const AuthContext = createContext();
 
@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setAccessToken(null);
     setRefreshToken(null);
+    clearTokens();
   };
 
   return (

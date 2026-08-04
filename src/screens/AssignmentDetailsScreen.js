@@ -17,15 +17,18 @@ import {
   deleteAssignmentApi,
 } from "../api/manageAssignment";
 import { useLoading } from "../context/LoadingContext";
+import { getPriorityLevel } from "../utils/getPriorityLevel";
+import { useRefresh } from "../context/refreshContext";
 
 export default function AssignmentDetailsScreen({ route, navigation }) {
   const { assignments, completeAssignment, deleteAssignment } =
     useAssignments();
   const { colors } = useTheme();
   const assignment = assignments.find((item) => item.id === route.params.id);
+  const priority = getPriorityLevel(assignment?.priority);
 
-  console.log("complete", assignment.completeStatus);
   const { showLoading, hideLoading } = useLoading();
+  const { refresh } = useRefresh();
   if (!assignment) {
     return (
       <SafeAreaView
@@ -43,8 +46,9 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
   async function complete() {
     try {
       showLoading();
-      await completeAssignmentApi(assignment.id);
-      completeAssignment(assignment.id);
+      const updatedAssignment = await completeAssignmentApi(assignment.id);
+      completeAssignment(assignment.id, updatedAssignment);
+      refresh();
       navigation.goBack();
     } catch (e) {
     } finally {
@@ -57,6 +61,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
       showLoading();
       await deleteAssignmentApi(assignment.id);
       deleteAssignment(assignment.id);
+      refresh();
       navigation.goBack();
     } catch (e) {
     } finally {
@@ -99,7 +104,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
           />
           <Info
             label="Priority"
-            value={assignment.priority}
+            value={`${priority.label} (${assignment.priority}/10)`}
             icon="flag-outline"
             colors={colors}
           />

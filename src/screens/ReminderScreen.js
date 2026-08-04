@@ -7,7 +7,9 @@ import { useTheme } from "../context/ThemeContext";
 export default function ReminderScreen() {
   const { assignments } = useAssignments();
   const { colors } = useTheme();
-  const sorted = assignments;
+  const sorted = [...assignments].sort(
+    (a, b) => new Date(a.deadline) - new Date(b.deadline),
+  );
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>

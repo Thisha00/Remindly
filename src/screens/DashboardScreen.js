@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import {
   FlatList,
-  Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -18,23 +17,24 @@ import { getAssignments } from "../api/getAssignments";
 import { useRefresh } from "../context/refreshContext";
 
 export default function DashboardScreen({ navigation }) {
-  const { assignments, addAssignment, setTotalAssingments, setComplete } =
+  const { assignments, replaceAssignments, setTotalAssingments, setComplete } =
     useAssignments();
   const { colors } = useTheme();
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
 
-  const { refresh } = useRefresh();
+  const { refreshVersion } = useRefresh();
   useEffect(() => {
     fetchAssignments();
-  }, [refresh]);
+  }, [refreshVersion]);
 
   async function fetchAssignments() {
     showLoading();
     try {
       const fetchedAssignments = await getAssignments();
 
-      addAssignment(fetchedAssignments.assignments);
+      if (!fetchedAssignments) return;
+      replaceAssignments(fetchedAssignments.assignments);
       console.log(fetchedAssignments.assignments);
       setTotalAssingments(fetchedAssignments.pagination.totalAssignments);
       console.log(fetchedAssignments.pagination.completeAssignments);
@@ -59,9 +59,6 @@ export default function DashboardScreen({ navigation }) {
         <View style={[styles.avatar, { backgroundColor: colors.softPrimary }]}>
           <Icon name="school-outline" size={22} color={colors.primary} />
         </View>
-        <Pressable onPress={refresh}>
-          <Text>Test</Text>
-        </Pressable>
       </View>
 
       <Text style={[styles.section, { color: colors.text }]}>

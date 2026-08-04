@@ -14,7 +14,7 @@ export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [university, setUniversity] = useState("");
-  const [year, setYear] = useState(1);
+  const [year, setYear] = useState("1");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
@@ -26,17 +26,29 @@ export default function RegisterScreen({ navigation }) {
     try {
       showLoading();
       if (!name || !email || !university || !year || !password || !confirm) {
-        showToast("Please fill all fields", "error");
+        showToast("Complete every field before creating your account.", "warning");
+        return;
+      }
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+        showToast("Enter a valid email address.", "warning");
+        return;
+      }
+      if (!Number.isInteger(Number(year)) || Number(year) < 1) {
+        showToast("Enter a valid university year.", "warning");
+        return;
+      }
+      if (password.length < 6) {
+        showToast("Password must contain at least 6 characters.", "warning");
         return;
       }
       if (password !== confirm) {
-        showToast("Passwords do not match", "error");
+        showToast("Password and confirmation do not match.", "warning");
         return;
       }
       const result = await userRegister({
         name,
         university,
-        year,
+        year: Number(year),
         email,
         password,
       });
@@ -49,7 +61,6 @@ export default function RegisterScreen({ navigation }) {
       navigation.navigate("MainTabs");
     } catch (error) {
       console.error("Error registering user:", error);
-      showToast("An error occurred while registering.", "error");
     } finally {
       hideLoading();
     }
@@ -94,6 +105,7 @@ export default function RegisterScreen({ navigation }) {
             value={year}
             onChangeText={setYear}
             placeholder="1"
+            keyboardType="numeric"
           />
           <InputField
             label="Password"

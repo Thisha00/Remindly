@@ -16,12 +16,21 @@ import { globalStyles } from "../styles/globalStyles";
 import { useAuth } from "../context/authContex";
 import { useLoading } from "../context/LoadingContext";
 import { getInitials } from "../utils/getInitials";
+import { useToast } from "../context/ToastContext";
 
 export default function ProfileScreen({ navigation }) {
-  const { assignments, completedAssignments, complete, totalAssingments } =
-    useAssignments();
+  const { complete, totalAssingments } = useAssignments();
   const { colors, darkMode, toggleDarkMode } = useTheme();
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
+
+  const toggleTheme = () => {
+    toggleDarkMode();
+    showToast(
+      `${darkMode ? "Light" : "Dark"} mode enabled.`,
+      "info",
+    );
+  };
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -39,15 +48,15 @@ export default function ProfileScreen({ navigation }) {
             </Text>
           </View>
           <Text style={[styles.name, { color: colors.text }]}>
-            {user.name ?? ""}
+            {user?.name ?? ""}
           </Text>
           <Text style={[styles.email, { color: colors.muted }]}>
-            {user.email ?? ""}/{user.university || ""}
+            {user?.email ?? ""}/{user?.university || ""}
           </Text>
           <View style={styles.stats}>
             <Metric
               label="To-do"
-              value={totalAssingments - complete}
+              value={Math.max(0, totalAssingments - complete)}
               colors={colors}
             />
             <Metric label="Completed" value={complete} colors={colors} />
@@ -60,7 +69,7 @@ export default function ProfileScreen({ navigation }) {
             { backgroundColor: colors.card, borderColor: colors.border },
           ]}
         >
-          <TouchableOpacity style={styles.row} onPress={toggleDarkMode}>
+          <TouchableOpacity style={styles.row} onPress={toggleTheme}>
             <View style={styles.rowLeft}>
               <Icon
                 name={darkMode ? "moon" : "moon-outline"}
@@ -84,12 +93,23 @@ export default function ProfileScreen({ navigation }) {
             icon="notifications-outline"
             label="Notification Settings"
             colors={colors}
+            onPress={() =>
+              showToast("Notification settings are not available yet.", "info")
+            }
           />
-          <MenuRow icon="help-circle-outline" label="Help" colors={colors} />
+          <MenuRow
+            icon="help-circle-outline"
+            label="Help"
+            colors={colors}
+            onPress={() => showToast("Help content is coming soon.", "info")}
+          />
           <MenuRow
             icon="information-circle-outline"
             label="About Us"
             colors={colors}
+            onPress={() =>
+              showToast("Remindly — your intelligent assignment planner.", "info")
+            }
           />
         </View>
 
@@ -98,6 +118,7 @@ export default function ProfileScreen({ navigation }) {
           danger
           onPress={() => {
             logout();
+            showToast("You have been logged out safely.", "success");
             navigation.replace("Login");
           }}
           icon={<Icon name="log-out-outline" size={18} color={colors.danger} />}
@@ -118,9 +139,9 @@ function Metric({ label, value, colors }) {
   );
 }
 
-function MenuRow({ icon, label, colors }) {
+function MenuRow({ icon, label, colors, onPress }) {
   return (
-    <TouchableOpacity style={styles.row}>
+    <TouchableOpacity style={styles.row} onPress={onPress}>
       <View style={styles.rowLeft}>
         <Icon name={icon} size={20} color={colors.primary} />
         <Text style={[styles.rowText, { color: colors.text }]}>{label}</Text>

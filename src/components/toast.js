@@ -1,13 +1,14 @@
-import { View, Text, StyleSheet } from "react-native";
+import { Pressable, View, Text, StyleSheet } from "react-native";
 import { useToast } from "../context/ToastContext";
 
 export default function Toast() {
-  const { toast } = useToast();
+  const { toast, hideToast } = useToast();
 
   if (!toast.visible) return null;
 
   return (
-    <View
+    <Pressable
+      onPress={hideToast}
       style={[
         styles.container,
         toast.type === "success" && styles.success,
@@ -17,7 +18,7 @@ export default function Toast() {
       ]}
     >
       <Text style={styles.text}>{toast.message}</Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -30,6 +31,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     zIndex: 999,
+    elevation: 20,
   },
   text: {
     color: "#fff",

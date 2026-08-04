@@ -7,15 +7,14 @@ export async function completeAssignmentApi(assignmentId) {
     const response = await api.patch(`/assignment/${assignmentId}/complete`);
 
     if (response.data.success) {
-      showGlobalToast("Assignment marked as completed!", "success");
+      showGlobalToast("Assignment marked as completed.", "success");
       return response.data.data;
-    } else {
-      showGlobalToast("Failed to complete assignment.", "error");
-      throw new Error("Failed to complete assignment");
     }
+    throw new Error("Failed to complete assignment");
   } catch (error) {
     showGlobalToast(
-      "An error occurred while completing the assignment.",
+      error.response?.data?.message ||
+        "Could not mark this assignment as completed. Please try again.",
       "error",
     );
     console.error("Error completing assignment:", error);
@@ -28,15 +27,14 @@ export async function deleteAssignmentApi(assignmentId) {
     const response = await api.delete(`/assignment/${assignmentId}/delete`);
 
     if (response.data.success) {
-      showGlobalToast("Assignment deleted successfully!", "success");
+      showGlobalToast("Assignment deleted successfully.", "success");
       return response.data.data;
-    } else {
-      showGlobalToast("Failed to delete assignment.", "error");
-      throw new Error("Failed to delete assignment");
     }
+    throw new Error("Failed to delete assignment");
   } catch (error) {
     showGlobalToast(
-      "An error occurred while deleting the assignment.",
+      error.response?.data?.message ||
+        "Could not delete this assignment. Please try again.",
       "error",
     );
     console.error("Error deleting assignment:", error);

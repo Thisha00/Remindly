@@ -29,7 +29,11 @@ export default function LoginScreen({ navigation }) {
     showLoading();
     try {
       if (!email || !password) {
-        showToast("Please fill all fields", "error");
+        showToast("Enter both your email address and password.", "warning");
+        return;
+      }
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+        showToast("Enter a valid email address.", "warning");
         return;
       }
       const result = await userLogin({ email, password });
@@ -41,7 +45,6 @@ export default function LoginScreen({ navigation }) {
       navigation.navigate("MainTabs");
     } catch (error) {
       console.error("Login error:", error);
-      showToast("An error occurred during login. Please try again.", "error");
     } finally {
       hideLoading();
     }
@@ -86,7 +89,12 @@ export default function LoginScreen({ navigation }) {
             secureTextEntry
           />
 
-          <TouchableOpacity style={styles.forgot}>
+          <TouchableOpacity
+            style={styles.forgot}
+            onPress={() =>
+              showToast("Password recovery is not available yet.", "info")
+            }
+          >
             <Text style={[styles.link, { color: colors.primary }]}>
               Forgot Password?
             </Text>

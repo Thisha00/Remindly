@@ -15,20 +15,18 @@ export async function userRegister({
       email,
       password,
     });
-    if (!response.success) {
-      showGlobalToast("Registration failed.", "error");
+    if (!response.data.success) {
+      throw new Error("Registration failed");
     }
     showGlobalToast("Registration successful!", "success");
     return response.data;
   } catch (error) {
     console.error("Error during user registration:", error);
-    if (error.response && error.response.data && error.response.data.message) {
-      showGlobalToast(error.response.data.message, "error");
-    } else {
-      showGlobalToast(
-        "An unexpected error occurred during registration.",
-        "error",
-      );
-    }
+    showGlobalToast(
+      error.response?.data?.message ||
+        "Unable to create your account. Check your connection and try again.",
+      "error",
+    );
+    throw error;
   }
 }

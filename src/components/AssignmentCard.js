@@ -3,10 +3,18 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../context/ThemeContext";
 import { globalStyles } from "../styles/globalStyles";
+import { getPriorityLevel } from "../utils/getPriorityLevel";
 
 export default function AssignmentCard({ assignment, onPress }) {
   const { colors } = useTheme();
-  const danger = assignment.priority === "Urgent";
+  const priority = getPriorityLevel(assignment.priority);
+  const danger = priority.level === "urgent";
+  const priorityColor =
+    priority.level === "urgent"
+      ? colors.danger
+      : priority.level === "high"
+        ? colors.warning
+        : colors.primary;
 
   return (
     <TouchableOpacity
@@ -15,7 +23,13 @@ export default function AssignmentCard({ assignment, onPress }) {
       style={[
         styles.card,
         globalStyles.shadow,
-        { backgroundColor: colors.card, borderColor: danger ? colors.danger : colors.border }
+        {
+          backgroundColor: colors.card,
+          borderColor:
+            priority.level === "urgent" || priority.level === "high"
+              ? priorityColor
+              : colors.border,
+        },
       ]}
     >
       <View style={[styles.icon, { backgroundColor: danger ? "#FEE2E2" : colors.softPrimary }]}>
@@ -26,8 +40,8 @@ export default function AssignmentCard({ assignment, onPress }) {
           <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
             {assignment.title}
           </Text>
-          <Text style={[styles.badge, { color: danger ? colors.danger : colors.primary }]}>
-            {assignment.priority}
+          <Text style={[styles.badge, { color: priorityColor }]}>
+            {priority.label} · {assignment.priority}/10
           </Text>
         </View>
         <Text style={[styles.subject, { color: colors.muted }]} numberOfLines={1}>

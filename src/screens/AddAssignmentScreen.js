@@ -15,16 +15,29 @@ import InputField from "../components/InputField";
 import { useAssignments } from "../context/AssignmentContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
-import { uploadAssignment } from "../api/addAssignment";
+import {
+  completePendingAssignment,
+  uploadAssignment,
+} from "../api/addAssignment";
 import { useLoading } from "../context/LoadingContext";
+import Toast from "../components/toast";
 
 export default function AddAssignmentScreen({ navigation }) {
-  const { addAssignment, setTotalAssingments } = useAssignments();
+  const { addAssignment } = useAssignments();
   const { colors } = useTheme();
-  const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState("");
-  const [note, setNote] = useState("");
   const [pdfFile, setPdfFile] = useState(null);
+  const [missingFields, setMissingFields] = useState([]);
+  const [manualFields, setManualFields] = useState({});
+  const [missingModalVisible, setMissingModalVisible] = useState(false);
+  const [pendingId, setPendingId] = useState(null);
+  const reviewFields = [
+    "title",
+    "shortSummary",
+    "module",
+    "difficulty",
+    "estimatedTime",
+    "deadline",
+  ];
 
   const { showLoading, hideLoading } = useLoading();
   const { showToast } = useToast();
@@ -43,33 +56,140 @@ export default function AddAssignmentScreen({ navigation }) {
       const file = result.assets[0];
 
       setPdfFile(file);
+      showToast(`${file.name} is ready to upload.`, "success");
 
       console.log(file);
     } catch (error) {
       console.log(error);
+      showToast("Could not open the PDF picker. Please try again.", "error");
     }
   }
 
-  async function save() {
+  const fieldConfig = {
+    title: { label: "Assignment Title", placeholder: "Database project" },
+    shortSummary: {
+      label: "Assignment Summary",
+      placeholder: "Briefly describe the assignment",
+      multiline: true,
+      maxLength: 500,
+    },
+    module: { label: "Subject / Module", placeholder: "Database Management" },
+    difficulty: {
+      label: "Difficulty (0-10)",
+      placeholder: "5",
+      keyboardType: "numeric",
+    },
+    estimatedTime: {
+      label: "Estimated Time (minutes)",
+      placeholder: "120",
+      keyboardType: "numeric",
+    },
+    deadline: {
+      label: "Deadline (YYYY-MM-DD)",
+      placeholder: "2026-08-31",
+    },
+  };
+
+  async function save(fields = manualFields) {
     try {
+      if (pendingId) {
+        setMissingModalVisible(true);
+        return;
+      }
       showLoading();
-      if (!title || !subject || !pdfFile) {
-        showToast("Please fill in all fields and upload a PDF file.", "error");
+      if (!pdfFile) {
+        showToast("Please upload a PDF file.", "error");
         return;
       }
       const result = await uploadAssignment({
-        title,
-        module: subject,
-        showadditionalInfo: note,
+        manualFields: fields,
         file: pdfFile,
       });
+      if (result?.code === "ASSIGNMENT_REVIEW_REQUIRED") {
+        setMissingFields(result.data.missingFields);
+        setPendingId(result.data.pendingId);
+        setManualFields(result.data.fields);
+        setMissingModalVisible(true);
+        return;
+      }
+      if (!result?.data?.assignment) return;
       console.log("Upload result:", result);
       addAssignment(result.data.assignment);
-      setTotalAssingments((n) => n + 1);
       navigation.goBack();
     } catch (error) {
       console.error("Error uploading assignment:", error);
-      showToast("An error occurred while uploading the assignment.", "error");
+    } finally {
+      hideLoading();
+    }
+  }
+
+  async function submitMissingFields() {
+    const invalidFields = reviewFields.filter((field) => {
+      const value = String(manualFields[field] ?? "").trim();
+      if (!value) return true;
+      if (field === "difficulty") {
+        const number = Number(value);
+        return !Number.isFinite(number) || number < 0 || number > 10;
+      }
+      if (field === "estimatedTime") {
+        const number = Number(value);
+        return !Number.isFinite(number) || number < 1;
+      }
+      if (field === "deadline") {
+        return !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+          Number.isNaN(new Date(value).getTime());
+      }
+      return false;
+    });
+    if (invalidFields.length) {
+      setMissingFields(invalidFields);
+      showToast("Complete or correct every field outlined in red.", "warning");
+      return;
+    }
+
+    const difficulty = Number(manualFields.difficulty);
+    const estimatedTime = Number(manualFields.estimatedTime);
+    if (
+      missingFields.includes("difficulty") &&
+      (!Number.isFinite(difficulty) || difficulty < 0 || difficulty > 10)
+    ) {
+      showToast("Difficulty must be between 0 and 10.", "error");
+      return;
+    }
+    if (
+      missingFields.includes("estimatedTime") &&
+      (!Number.isFinite(estimatedTime) || estimatedTime < 1)
+    ) {
+      showToast("Estimated time must be at least 1 minute.", "error");
+      return;
+    }
+
+    if (!pendingId) {
+      showToast("The temporary assignment could not be found.", "error");
+      return;
+    }
+
+    try {
+      showLoading();
+      const result = await completePendingAssignment(pendingId, manualFields);
+      if (result?.code === "MISSING_ASSIGNMENT_FIELDS") {
+        setMissingFields(result.data.missingFields);
+        setPendingId(result.data.pendingId);
+        return;
+      }
+      if (!result?.data?.assignment) return;
+
+      setMissingModalVisible(false);
+      addAssignment(result.data.assignment);
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error completing pending assignment:", error);
+      if (error.response?.data?.code === "PENDING_ASSIGNMENT_NOT_FOUND") {
+        setPendingId(null);
+        setMissingFields([]);
+        setManualFields({});
+        setMissingModalVisible(false);
+      }
     } finally {
       hideLoading();
     }
@@ -90,28 +210,9 @@ export default function AddAssignmentScreen({ navigation }) {
           New Assignment
         </Text>
         <Text style={[styles.sub, { color: colors.muted }]}>
-          Let's map out your next milestone.
+          Upload the assignment brief and the details will be extracted
+          automatically.
         </Text>
-
-        <InputField
-          label="Assignment Title"
-          value={title}
-          onChangeText={setTitle}
-          placeholder="Database project"
-        />
-        <InputField
-          label="Subject / Module"
-          value={subject}
-          onChangeText={setSubject}
-          placeholder="Database Management"
-        />
-        <InputField
-          label="Additional Note"
-          value={note}
-          onChangeText={setNote}
-          placeholder="Write useful details"
-          multiline
-        />
 
         <TouchableOpacity
           style={[
@@ -121,11 +222,14 @@ export default function AddAssignmentScreen({ navigation }) {
           onPress={choosePdf}
         >
           <Icon name="cloud-upload-outline" size={28} color={colors.primary} />
-          <Text style={[styles.uploadText, { color: colors.text }]}>
-            Upload brief PDF
+          <Text
+            style={[styles.uploadText, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {pdfFile ? pdfFile.name : "Upload brief PDF"}
           </Text>
           <Text style={[styles.uploadSub, { color: colors.muted }]}>
-            Max file size 10MB
+            {pdfFile ? "Tap to choose a different PDF" : "Max file size 20MB"}
           </Text>
         </TouchableOpacity>
 
@@ -135,6 +239,48 @@ export default function AddAssignmentScreen({ navigation }) {
           icon={<Icon name="save-outline" size={18} color="#FFFFFF" />}
         />
       </ScrollView>
+
+      <Modal
+        visible={missingModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setMissingModalVisible(false)}
+      >
+        <Toast />
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Review assignment
+            </Text>
+            <Text style={[styles.modalText, { color: colors.muted }]}>
+              Check every extracted value before saving. Missing or invalid fields are outlined in red, and all fields can be edited.
+            </Text>
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {reviewFields.map((field) => (
+                <InputField
+                  key={field}
+                  {...fieldConfig[field]}
+                  error={missingFields.includes(field)}
+                  value={manualFields[field] ?? ""}
+                  onChangeText={(value) =>
+                    setManualFields((current) => ({ ...current, [field]: value }))
+                  }
+                />
+              ))}
+              <CustomButton
+                title="Save Assignment"
+                onPress={submitMissingFields}
+              />
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setMissingModalVisible(false)}
+              >
+                <Text style={{ color: colors.muted }}>Cancel</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -182,4 +328,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 4,
   },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.55)",
+    padding: 20,
+  },
+  modalCard: {
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: "85%",
+  },
+  modalTitle: { fontSize: 21, fontWeight: "900" },
+  modalText: { fontSize: 13, lineHeight: 19, marginTop: 6, marginBottom: 18 },
+  cancelButton: { alignItems: "center", padding: 14 },
 });

@@ -68,7 +68,7 @@ export default function ProgressScreen() {
                 />
                 <Stat
                   label="Remaining"
-                  value={totalAssingments - complete}
+                  value={Math.max(0, totalAssingments - complete)}
                   color={darkMode ? "#FCA5A5" : colors.danger}
                 />
               </View>
