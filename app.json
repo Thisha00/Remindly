@@ -5,13 +5,25 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "assetBundlePatterns": [
-      "**/*"
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/logo.png"
+        }
+      ]
     ],
+    "assetBundlePatterns": ["**/*"],
     "android": {
       "package": "com.remindly.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#6D28D9"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f4e103e4-1c97-4c74-ac23-10c807a579c4"
       }
     }
   }

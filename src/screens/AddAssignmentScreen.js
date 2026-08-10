@@ -21,6 +21,7 @@ import {
 } from "../api/addAssignment";
 import { useLoading } from "../context/LoadingContext";
 import Toast from "../components/toast";
+import { deletePendingAssignment } from "../api/deletePendingAssignment";
 
 export default function AddAssignmentScreen({ navigation }) {
   const { addAssignment } = useAssignments();
@@ -89,6 +90,14 @@ export default function AddAssignmentScreen({ navigation }) {
       placeholder: "2026-08-31",
     },
   };
+  async function resetForm() {
+    await deletePendingAssignment(pendingId);
+    setPdfFile(null);
+    setMissingFields([]);
+    setManualFields({});
+    setPendingId(null);
+    setMissingModalVisible(false);
+  }
 
   async function save(fields = manualFields) {
     try {
@@ -136,8 +145,10 @@ export default function AddAssignmentScreen({ navigation }) {
         return !Number.isFinite(number) || number < 1;
       }
       if (field === "deadline") {
-        return !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-          Number.isNaN(new Date(value).getTime());
+        return (
+          !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+          Number.isNaN(new Date(value).getTime())
+        );
       }
       return false;
     });
@@ -253,7 +264,8 @@ export default function AddAssignmentScreen({ navigation }) {
               Review assignment
             </Text>
             <Text style={[styles.modalText, { color: colors.muted }]}>
-              Check every extracted value before saving. Missing or invalid fields are outlined in red, and all fields can be edited.
+              Check every extracted value before saving. Missing or invalid
+              fields are outlined in red, and all fields can be edited.
             </Text>
             <ScrollView keyboardShouldPersistTaps="handled">
               {reviewFields.map((field) => (
@@ -263,7 +275,10 @@ export default function AddAssignmentScreen({ navigation }) {
                   error={missingFields.includes(field)}
                   value={manualFields[field] ?? ""}
                   onChangeText={(value) =>
-                    setManualFields((current) => ({ ...current, [field]: value }))
+                    setManualFields((current) => ({
+                      ...current,
+                      [field]: value,
+                    }))
                   }
                 />
               ))}
@@ -273,7 +288,9 @@ export default function AddAssignmentScreen({ navigation }) {
               />
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => setMissingModalVisible(false)}
+                onPress={async () => {
+                  await resetForm();
+                }}
               >
                 <Text style={{ color: colors.muted }}>Cancel</Text>
               </TouchableOpacity>

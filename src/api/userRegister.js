@@ -1,5 +1,6 @@
 import api from "./axios";
 import { showGlobalToast } from "../services/toastService";
+import { registerForPushNotificationsAsync } from "../services/Notification";
 export async function userRegister({
   name,
   university,
@@ -8,12 +9,14 @@ export async function userRegister({
   password,
 }) {
   try {
+    const expoPushToken = await registerForPushNotificationsAsync();
     const response = await api.post("/auth/register", {
       name,
       university,
       year,
       email,
       password,
+      expoPushToken,
     });
     if (!response.data.success) {
       throw new Error("Registration failed");

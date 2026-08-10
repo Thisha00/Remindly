@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237791788673",
+    "project_id": "remindly-c967f",
+    "storage_bucket": "remindly-c967f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237791788673:android:8afae400e706a106a39780",
+        "android_client_info": {
+          "package_name": "com.remindly.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_Z6Ia05Uc9i5lmzZ1hyjIZrG3VpCmFQs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -6,7 +6,7 @@ import {
 } from "../services/tokenService";
 
 const api = axios.create({
-  baseURL: "http://10.0.2.2:3000/api/v1",
+  baseURL: "https://minproject-back-production.up.railway.app/api/v1",
   timeout: 1000000,
   headers: {
     "Content-Type": "application/json",
@@ -38,7 +38,7 @@ api.interceptors.response.use(
         const refreshToken = getRefreshToken();
 
         const response = await axios.post(
-          "http://10.0.2.2:3000/api/v1/auth/refresh-token",
+          "http://10.207.64.242:3000/api/v1/auth/refresh-token",
           {
             refreshToken,
           },
