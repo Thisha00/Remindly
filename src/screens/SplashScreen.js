@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useAnimatedStyle,
@@ -31,22 +32,27 @@ export default function SplashScreen({ navigation }) {
 
   return (
     <LinearGradient colors={["#7C3AED", "#2836B8"]} style={styles.container}>
-      <View style={styles.logoBox}>
-        <Icon name="book" size={36} color="#FFFFFF" />
-      </View>
-      <Text style={styles.title}>Remindly</Text>
-      <Text style={styles.subtitle}>
-        Smart Assignment Management for Students
-      </Text>
-      <View style={styles.track}>
-        <Animated.View style={[styles.fill, progressStyle]} />
-      </View>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.logoBox}>
+          <Icon name="book" size={36} color="#FFFFFF" />
+        </View>
+        <Text style={styles.title}>Remindly</Text>
+        <Text style={styles.subtitle}>
+          Smart Assignment Management for Students
+        </Text>
+        <View style={styles.track}>
+          <Animated.View style={[styles.fill, progressStyle]} />
+        </View>
+      </SafeAreaView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  safe: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",

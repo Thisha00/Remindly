@@ -2,11 +2,11 @@ import React from "react";
 import {
   Dimensions,
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { ProgressChart } from "react-native-chart-kit";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useAssignments } from "../context/AssignmentContext";

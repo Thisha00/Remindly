@@ -15,7 +15,6 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = getAccessToken();
-    console.log("Request config:", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -38,7 +37,7 @@ api.interceptors.response.use(
         const refreshToken = getRefreshToken();
 
         const response = await axios.post(
-          "http://10.207.64.242:3000/api/v1/auth/refresh-token",
+          "https://minproject-back-production.up.railway.app/api/v1/auth/refresh-token",
           {
             refreshToken,
           },

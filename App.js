@@ -1,5 +1,6 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AssignmentProvider } from "./src/context/AssignmentContext";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import AppNavigator from "./src/navigation/AppNavigator";
@@ -22,6 +23,7 @@ Notifications.setNotificationHandler({
 
 export default function App() {
   return (
+    <SafeAreaProvider>
     <LoadingProvider>
       <RefreshProvider>
         <AuthProvider>
@@ -39,5 +41,6 @@ export default function App() {
         </AuthProvider>
       </RefreshProvider>
     </LoadingProvider>
+    </SafeAreaProvider>
   );
 }

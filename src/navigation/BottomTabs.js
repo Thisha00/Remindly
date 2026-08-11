@@ -7,6 +7,7 @@ import CalendarScreen from "../screens/CalendarScreen";
 import ReminderScreen from "../screens/ReminderScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import { useTheme } from "../context/ThemeContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Tab = createBottomTabNavigator();
 
@@ -23,6 +24,7 @@ function tabIcon(name, focused, color) {
 
 export default function BottomTabs() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -32,9 +34,8 @@ export default function BottomTabs() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          height: 66,
-          marginBottom: 10,
-          paddingBottom: 8,
+          height: 58 + insets.bottom,
+          paddingBottom: insets.bottom || 8,
           paddingTop: 10,
           backgroundColor: colors.card,
           borderTopColor: colors.border
