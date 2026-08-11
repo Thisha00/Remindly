@@ -11,6 +11,8 @@ import { LoadingProvider } from "./src/context/LoadingContext";
 import GlobalLoader from "./src/components/GlobalLoader";
 import { RefreshProvider } from "./src/context/refreshContext";
 import * as Notifications from "expo-notifications";
+import { useEffect, useRef } from "react";
+import { setupNotificationNavigation } from "./src/services/Notification";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -22,25 +24,34 @@ Notifications.setNotificationHandler({
 });
 
 export default function App() {
+  const navigationRef = useRef(null);
+
+  useEffect(() => {
+    const subscription = setupNotificationNavigation(navigationRef);
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
   return (
     <SafeAreaProvider>
-    <LoadingProvider>
-      <RefreshProvider>
-        <AuthProvider>
-          <ThemeProvider>
-            <ToastProvider>
-              <AssignmentProvider>
-                <NavigationContainer>
-                  <GlobalLoader />
-                  <Toast />
-                  <AppNavigator />
-                </NavigationContainer>
-              </AssignmentProvider>
-            </ToastProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </RefreshProvider>
-    </LoadingProvider>
+      <LoadingProvider>
+        <RefreshProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <ToastProvider>
+                <AssignmentProvider>
+                  <NavigationContainer ref={navigationRef}>
+                    <GlobalLoader />
+                    <Toast />
+                    <AppNavigator />
+                  </NavigationContainer>
+                </AssignmentProvider>
+              </ToastProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </RefreshProvider>
+      </LoadingProvider>
     </SafeAreaProvider>
   );
 }

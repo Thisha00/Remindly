@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +10,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import CustomButton from "../components/CustomButton";
-import { useAssignments } from "../context/AssignmentContext";
+import {
+  normalizeAssignment,
+  useAssignments,
+} from "../context/AssignmentContext";
 import { useTheme } from "../context/ThemeContext";
 import { globalStyles } from "../styles/globalStyles";
 import {
@@ -19,16 +23,67 @@ import {
 import { useLoading } from "../context/LoadingContext";
 import { getPriorityLevel } from "../utils/getPriorityLevel";
 import { useRefresh } from "../context/refreshContext";
+import { getSingleAssignmentApi } from "../api/getSingleAssinment";
 
 export default function AssignmentDetailsScreen({ route, navigation }) {
-  const { assignments, completeAssignment, deleteAssignment } =
-    useAssignments();
-  const { colors } = useTheme();
-  const assignment = assignments.find((item) => item.id === route.params.id);
-  const priority = getPriorityLevel(assignment?.priority);
+  const { id } = route.params;
 
+  const { assignments, addAssignment, completeAssignment, deleteAssignment } =
+    useAssignments();
+
+  const { colors } = useTheme();
   const { showLoading, hideLoading } = useLoading();
   const { refresh } = useRefresh();
+
+  const [assignment, setAssignment] = useState(null);
+  const [loadingAssignment, setLoadingAssignment] = useState(true);
+
+  useEffect(() => {
+    const fetchAssignment = async () => {
+      try {
+        showLoading();
+
+        const localAssignment = assignments.find((item) => item.id === id);
+
+        if (localAssignment) {
+          setAssignment(localAssignment);
+          return;
+        }
+
+        const fetchedAssignment = await getSingleAssignmentApi(id);
+        const normalizedAssignment = normalizeAssignment(fetchedAssignment);
+
+        console.log("Fetched assignment:", fetchedAssignment);
+
+        addAssignment(fetchedAssignment);
+
+        setAssignment(normalizedAssignment);
+      } catch (error) {
+        console.error("Error fetching assignment:", error);
+        setAssignment(null);
+      } finally {
+        setLoadingAssignment(false);
+        hideLoading();
+      }
+    };
+
+    fetchAssignment();
+  }, [id]);
+
+  if (loadingAssignment) {
+    return (
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: colors.background }]}
+      >
+        <View style={styles.center}>
+          <Text style={[styles.title, { color: colors.text }]}>
+            Loading assignment...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!assignment) {
     return (
       <SafeAreaView
@@ -43,14 +98,30 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
     );
   }
 
+  const priority = getPriorityLevel(assignment.priority);
+
+  async function openPdf() {
+    if (!assignment.pdfUrl) return;
+
+    try {
+      await Linking.openURL(assignment.pdfUrl);
+    } catch (error) {
+      console.log("Failed to open PDF:", error);
+    }
+  }
+
   async function complete() {
     try {
       showLoading();
+
       const updatedAssignment = await completeAssignmentApi(assignment.id);
+
       completeAssignment(assignment.id, updatedAssignment);
+
       refresh();
       navigation.goBack();
     } catch (e) {
+      console.log("Complete assignment error:", e);
     } finally {
       hideLoading();
     }
@@ -59,11 +130,15 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
   async function remove() {
     try {
       showLoading();
+
       await deleteAssignmentApi(assignment.id);
+
       deleteAssignment(assignment.id);
+
       refresh();
       navigation.goBack();
     } catch (e) {
+      console.log("Delete assignment error:", e);
     } finally {
       hideLoading();
     }
@@ -77,6 +152,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
           onPress={() => navigation.goBack()}
         >
           <Icon name="chevron-back" size={22} color={colors.primary} />
+
           <Text style={[styles.backText, { color: colors.primary }]}>
             Assignment Details
           </Text>
@@ -85,6 +161,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
         <Text style={[styles.title, { color: colors.text }]}>
           {assignment.title}
         </Text>
+
         <Text style={[styles.subject, { color: colors.muted }]}>
           {assignment.subject}
         </Text>
@@ -102,33 +179,42 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
             icon="calendar-outline"
             colors={colors}
           />
+
           <Info
             label="Priority"
             value={`${priority.label} (${assignment.priority}/10)`}
             icon="flag-outline"
             colors={colors}
           />
+
           <Info
             label="Difficulty"
             value={assignment.difficulty}
             icon="stats-chart-outline"
             colors={colors}
           />
-          <Info
-            label="PDF"
-            value={assignment.fileName || "No file attached"}
-            icon="document-attach-outline"
-            colors={colors}
-          />
+
+          <TouchableOpacity onPress={openPdf} disabled={!assignment.pdfUrl}>
+            <Info
+              label="PDF"
+              value={assignment.pdfUrl ? "Open PDF" : "No file attached"}
+              icon="document-attach-outline"
+              colors={colors}
+            />
+          </TouchableOpacity>
         </View>
 
         <Text style={[styles.heading, { color: colors.text }]}>
           Additional Notes
         </Text>
+
         <View
           style={[
             styles.notes,
-            { backgroundColor: colors.card, borderColor: colors.border },
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            },
           ]}
         >
           <Text style={[styles.noteText, { color: colors.muted }]}>
@@ -150,6 +236,7 @@ export default function AssignmentDetailsScreen({ route, navigation }) {
                 />
               }
             />
+
             <CustomButton
               title="Delete Assignment"
               onPress={remove}
@@ -171,8 +258,10 @@ function Info({ label, value, icon, colors }) {
       <View style={[styles.infoIcon, { backgroundColor: colors.softPrimary }]}>
         <Icon name={icon} size={18} color={colors.primary} />
       </View>
+
       <View>
         <Text style={[styles.infoLabel, { color: colors.muted }]}>{label}</Text>
+
         <Text style={[styles.infoValue, { color: colors.text }]}>{value}</Text>
       </View>
     </View>

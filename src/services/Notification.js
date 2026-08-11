@@ -38,3 +38,20 @@ export async function registerForPushNotificationsAsync() {
     return null;
   }
 }
+export function setupNotificationNavigation(navigationRef) {
+  const subscription = Notifications.addNotificationResponseReceivedListener(
+    (response) => {
+      const data = response.notification.request.content.data;
+
+      console.log("Notification data:", data);
+
+      if (data?.type === "assignment" && data?.assignmentId) {
+        navigationRef.current?.navigate("AssignmentDetails", {
+          id: data.assignmentId,
+        });
+      }
+    },
+  );
+
+  return subscription;
+}

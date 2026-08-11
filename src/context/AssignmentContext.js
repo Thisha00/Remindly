@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 
 const AssignmentContext = createContext();
 
-function normalizeAssignment(assignment) {
+export function normalizeAssignment(assignment) {
   return {
     id: assignment._id ?? assignment.id,
     title: assignment.title,
@@ -43,34 +43,42 @@ export function AssignmentProvider({ children }) {
   }
 
   function addAssignment(newAssignments) {
-    const knownIds = new Set(
-      [...assignments, ...completedAssignments].map((item) => item.id),
-    );
     const items = (Array.isArray(newAssignments)
       ? newAssignments
       : [newAssignments]
     )
       .map(normalizeAssignment)
-      .filter((item) => item.id && !knownIds.has(item.id));
+      .filter((item) => item.id);
 
     if (!items.length) return;
 
+    const existingById = new Map(
+      [...assignments, ...completedAssignments].map((item) => [item.id, item]),
+    );
     const activeItems = items.filter((item) => !item.completeStatus);
     const completedItems = items.filter((item) => item.completeStatus);
+    const incomingIds = new Set(items.map((item) => item.id));
+    const newItemCount = items.filter((item) => !existingById.has(item.id)).length;
+    const completedCountChange = items.reduce((change, item) => {
+      const existing = existingById.get(item.id);
+      return (
+        change +
+        Number(Boolean(item.completeStatus)) -
+        Number(Boolean(existing?.completeStatus))
+      );
+    }, 0);
 
     setAssignments((current) => {
-      const incomingIds = new Set(activeItems.map((item) => item.id));
       return [...activeItems, ...current.filter((item) => !incomingIds.has(item.id))];
     });
     setCompletedAssignments((current) => {
-      const incomingIds = new Set(completedItems.map((item) => item.id));
       return [
         ...completedItems,
         ...current.filter((item) => !incomingIds.has(item.id)),
       ];
     });
-    setTotalAssingments((current) => current + items.length);
-    setComplete((current) => current + completedItems.length);
+    setTotalAssingments((current) => current + newItemCount);
+    setComplete((current) => Math.max(0, current + completedCountChange));
   }
 
   function completeAssignment(id, serverAssignment) {
